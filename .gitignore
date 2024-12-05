@@ -1,0 +1,46 @@
+
+
+# Python Bytecode
+__pycache__/
+*.py[cod]
+
+# Environment Variables
+.env
+
+# Virtual Environment
+venv/
+
+
+# IDE and Editor Directories
+.vscode/
+.idea/
+
+# Jupyter Notebook Checkpoints
+.ipynb_checkpoints/
+
+# Coverage Reports
+.coverage
+coverage.xml
+*.cover
+*.py,cover
+
+# Migrations
+migrations/
+*/migrations/
+
+# Test Output
+*.egg-info/
+dist/
+build/
+*.egg
+
+# Logs
+*.log
+
+# Sensitive Files
+*.secrets
+*.key
+
+# Operating System Files
+.DS_Store
+Thumbs.db
