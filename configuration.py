@@ -10,7 +10,7 @@ MONGODB_USERNAME = os.getenv("MONGODB_USERNAME")
 MONGODB_PASSWORD = os.getenv("MONGODB_PASSWORD")
 MONGODB_HOST = os.getenv("MONGODB_HOST")
 
-uri = f"mongodb+srv://{MONGODB_USERNAME}:{MONGODB_PASSWORD}@{MONGODB_HOST}/?retryWrites=true&w=majority&appName=Cluster0"
+uri = f"mongodb+srv://preethanandini175:admin123@cluster0.ig56d.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
 
 async def init_db():
     client = AsyncIOMotorClient(uri, tlsCAFile=certifi.where())
