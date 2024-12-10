@@ -12,7 +12,8 @@ MONGODB_HOST = os.getenv("MONGODB_HOST")
 
 uri = f"mongodb+srv://preethanandini175:admin123@cluster0.ig56d.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
 
+client = AsyncIOMotorClient(uri, tlsCAFile=certifi.where())
+db = client.bartergram
+
 async def init_db():
-    client = AsyncIOMotorClient(uri, tlsCAFile=certifi.where())
-    db = client.bartergram
     await init_beanie(database=db, document_models=[User])
