@@ -1,16 +1,26 @@
 from fastapi import FastAPI
 from configuration import init_db
 from contextlib import asynccontextmanager
-from utils.utils import create_test_user
+from starlette.middleware import Middleware
+from starlette.middleware.cors import CORSMiddleware
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     await init_db()
-    await create_test_user()  
     yield
 
 app = FastAPI(lifespan=lifespan)
 
-@app.get("/")
-def read_root():
-    return {"message": "Welcome to FastAPI!"}
+middleware = [
+    Middleware(
+        CORSMiddleware,
+        allow_origins= ["*"],
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+]
+
+from routes import router
+
+app.include_router(router)
