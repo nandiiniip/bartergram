@@ -1,10 +1,12 @@
-from fastapi import APIRouter, HTTPException, Depends, status, Query
+from fastapi import APIRouter, HTTPException, Depends, status, Query, File, UploadFile
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from datetime import timedelta, datetime, timezone
 from typing import List, Optional
 from models import User, Token
 from utils import create_access_token, verify_password, get_password_hash, decode_access_token
 from beanie import PydanticObjectId
+from pathlib import Path
+import shutil
 
 router = APIRouter()
 
@@ -83,3 +85,21 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends()):
     await new_token.insert()
 
     return {"access_token": access_token, "token_type": "bearer"}
+
+@router.post("/upload/")
+async def upload_picture(file: UploadFile = File(...), current_user: str = Depends(get_current_user)):
+    """
+    Upload a picture to the server.
+    """
+    # Validate file type
+    if file.content_type not in ["image/jpeg", "image/png", "image/jpg"]:
+        raise HTTPException(status_code=400, detail="Invalid file type. Only JPG, JPEG, and PNG are allowed.")
+    
+    # Save the file with a unique name
+    UPLOAD_FOLDER = Path("./uploads")
+    UPLOAD_FOLDER.mkdir(parents=True, exist_ok=True)        
+    file_path = UPLOAD_FOLDER /"img1"
+    with file_path.open("wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
+
+    return {"message": "File uploaded successfully", "file_path": str(file_path)}
