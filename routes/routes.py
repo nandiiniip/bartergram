@@ -91,21 +91,21 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends()):
 async def upload_product(
     name: str = Form(..., min_length=3, max_length=100),  # name as form field
     description: str = Form(None, max_length=500),  # description as form field (optional)
-    image: UploadFile = File(...),  # image as file upload
+    images: List[UploadFile] = File(...),  # image as file upload
     current_user: dict = Depends(get_current_user)  # Get the authenticated user (optional)
 ):
     try:
-        # Read the image content as binary
-        image_content = await image.read()
-
-        # Convert the binary content to Base64 string
-        image_base64 = base64.b64encode(image_content).decode("utf-8")
+        image_base64_list = [] 
+        for image in images: 
+            content = await image.read()
+            image_base64 = base64.b64encode(content).decode("utf-8")  
+            image_base64_list.append(image_base64)
 
         # Create a Product instance with Base64 image data
         product = Product(
             name=name,
             description=description,
-            image_base64=image_base64,  # Store the Base64 string
+            image_base64=image_base64_list,  # Store the Base64 string
             user_id=current_user.id,  # Associate with user
         )
 
@@ -117,7 +117,7 @@ async def upload_product(
             "product": {
                 "name": product.name,
                 "description": product.description,
-                "image_base64": "Image stored as Base64 string",
+                "Image_count": len(product.image_base64),
                 "user_id": str(current_user.id),
             }
         }
