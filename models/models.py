@@ -16,3 +16,11 @@ class Token(Document):
 
     class Settings:
         collection = "token_data"
+
+class Product(Document):
+    name: str
+    description: str
+    image_base64: str
+
+    class Settings:
+        collection = "products"

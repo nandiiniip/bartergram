@@ -1,6 +1,7 @@
-from .models import User, Token
+from .models import User, Token, Product
 
 __all__ = (
     User, 
-    Token 
+    Token,
+    Product
 )

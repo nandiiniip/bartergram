@@ -1,11 +1,12 @@
-from fastapi import APIRouter, HTTPException, Depends, status, Query, File, UploadFile
+from fastapi import APIRouter, HTTPException, Depends, status, Query, File, UploadFile, Form
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from datetime import timedelta, datetime, timezone
 from typing import List, Optional
-from models import User, Token
+from models import User, Token, Product
 from utils import create_access_token, verify_password, get_password_hash, decode_access_token
 from beanie import PydanticObjectId
 from pathlib import Path
+import base64
 import shutil
 
 router = APIRouter()
@@ -87,19 +88,38 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends()):
     return {"access_token": access_token, "token_type": "bearer"}
 
 @router.post("/upload/")
-async def upload_picture(file: UploadFile = File(...), current_user: str = Depends(get_current_user)):
-    """
-    Upload a picture to the server.
-    """
-    # Validate file type
-    if file.content_type not in ["image/jpeg", "image/png", "image/jpg"]:
-        raise HTTPException(status_code=400, detail="Invalid file type. Only JPG, JPEG, and PNG are allowed.")
-    
-    # Save the file with a unique name
-    UPLOAD_FOLDER = Path("./uploads")
-    UPLOAD_FOLDER.mkdir(parents=True, exist_ok=True)        
-    file_path = UPLOAD_FOLDER /"img1"
-    with file_path.open("wb") as buffer:
-        shutil.copyfileobj(file.file, buffer)
+async def upload_product(
+    name: str = Form(..., min_length=3, max_length=100),  # name as form field
+    description: str = Form(None, max_length=500),  # description as form field (optional)
+    image: UploadFile = File(...),  # image as file upload
+    current_user: dict = Depends(get_current_user)  # Get the authenticated user (optional)
+):
+    try:
+        # Read the image content as binary
+        image_content = await image.read()
 
-    return {"message": "File uploaded successfully", "file_path": str(file_path)}
+        # Convert the binary content to Base64 string
+        image_base64 = base64.b64encode(image_content).decode("utf-8")
+
+        # Create a Product instance with Base64 image data
+        product = Product(
+            name=name,
+            description=description,
+            image_base64=image_base64,  # Store the Base64 string
+            # user_id='67610aa9d98c214468345c91',  # Associate with user
+        )
+
+        # Save to MongoDB
+        await product.insert()
+
+        return {
+            "msg": "Product uploaded successfully",
+            "product": {
+                "name": product.name,
+                "description": product.description,
+                "image_base64": "Image stored as Base64 string",
+                # "user_id": product.user_id
+            }
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to upload product: {str(e)}")
