@@ -106,7 +106,7 @@ async def upload_product(
             name=name,
             description=description,
             image_base64=image_base64,  # Store the Base64 string
-            # user_id='67610aa9d98c214468345c91',  # Associate with user
+            user_id=current_user.id,  # Associate with user
         )
 
         # Save to MongoDB
@@ -118,7 +118,7 @@ async def upload_product(
                 "name": product.name,
                 "description": product.description,
                 "image_base64": "Image stored as Base64 string",
-                # "user_id": product.user_id
+                "user_id": str(current_user.id),
             }
         }
     except Exception as e:
