@@ -1,5 +1,5 @@
 from pydantic import field_validator, Field
-from beanie import Document
+from beanie import Document, PydanticObjectId
 from typing import Optional, List
 from datetime import datetime
 
@@ -21,6 +21,7 @@ class Product(Document):
     name: str
     description: str
     image_base64: List[str]
+    user_id: PydanticObjectId
 
     class Settings:
         collection = "products"

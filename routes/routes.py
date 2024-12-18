@@ -102,16 +102,18 @@ async def upload_product(
             image_base64_list.append(image_base64)
 
         # Create a Product instance with Base64 image data
+        user_id = PydanticObjectId(current_user.id)
         product = Product(
             name=name,
             description=description,
             image_base64=image_base64_list,  # Store the Base64 string
-            user_id=current_user.id,  # Associate with user
+            user_id= user_id,  # Associate with user
         )
 
         # Save to MongoDB
+        print(f"Product to be inserted: {product.user_id}")
         await product.insert()
-
+        
         return {
             "msg": "Product uploaded successfully",
             "product": {
@@ -119,7 +121,47 @@ async def upload_product(
                 "description": product.description,
                 "Image_count": len(product.image_base64),
                 "user_id": str(current_user.id),
+                "Product_ID": str(product.id)
             }
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to upload product: {str(e)}")
+
+
+@router.get("/user/{user_id}/products")
+async def get_product_count_by_user(user_id: str):
+    try:
+        user_id_obj = PydanticObjectId(user_id)
+
+        products = await Product.find({"user_id": user_id_obj}).to_list()
+
+        if not products:
+            raise HTTPException(status_code=404, detail="No products found for this user")
+
+        return {"user_id": user_id, "product_count": len(products)}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error fetching products: {str(e)}")
+
+
+# @router.get("/products/{product_name}/images")
+# async def get_images_by_name(product_name: str):
+#     # Fetch all products from the database by the product name
+#     products = await Product.find({"name": product_name}).to_list()
+
+#     if not products:
+#         raise HTTPException(status_code=404, detail="No products found with this name")
+
+#     # Prepare the result with image URLs for all products
+#     result = []
+#     for product in products:
+#         image_paths = product.image_base64
+#         if not image_paths:
+#             continue
+
+#         result.append({
+#             "product_name": product.name,
+#             "product_id": str(product.id),
+#             "image_urls": [f"/products/{product.name}/image/{Path(image).name}" for image in image_paths]
+#         })
+
+#     return {"products": result}
