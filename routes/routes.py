@@ -128,20 +128,35 @@ async def upload_product(
         raise HTTPException(status_code=500, detail=f"Failed to upload product: {str(e)}")
 
 
-@router.get("/user/{user_id}/products")
-async def get_product_count_by_user(user_id: str):
+@router.get("/MyProducts/")
+async def get_user_products(
+    current_user: dict = Depends(get_current_user)
+):
     try:
-        user_id_obj = PydanticObjectId(user_id)
-
-        products = await Product.find({"user_id": user_id_obj}).to_list()
-
-        if not products:
-            raise HTTPException(status_code=404, detail="No products found for this user")
-
-        return {"user_id": user_id, "product_count": len(products)}
+        # Convert the current user's ID to PydanticObjectId
+        user_id = PydanticObjectId(current_user.id)
+        
+        # Retrieve all products for the current user
+        products = await Product.find(Product.user_id == user_id).to_list()
+        
+        # Transform the products to include base64 images
+        product_list = []
+        for product in products:
+            product_dict = {
+                "product_id": str(product.id),
+                "product_name": product.name,
+                "description": product.description or "",
+                "images": product.image_base64,  # List of base64 encoded images
+                "image_count": len(product.image_base64)
+            }
+            product_list.append(product_dict)
+        
+        return {
+            "total_products": len(product_list),
+            "products": product_list
+        }
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error fetching products: {str(e)}")
-
+        raise HTTPException(status_code=500, detail=f"Failed to retrieve products: {str(e)}")
 
 # @router.get("/products/{product_name}/images")
 # async def get_images_by_name(product_name: str):
