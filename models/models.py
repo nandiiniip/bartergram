@@ -11,8 +11,10 @@ class User(Document):
         collection="user_data"
 
 class Token(Document):
+    username: Optional[str] = Field(None, title="Username")
     access_token : str = Field(..., title="Access Token")
     token_type : str = Field(..., title="Token Type")
+    expires_at: Optional[datetime] = Field(None, title="Token Expiration")
 
     class Settings:
         collection = "token_data"
