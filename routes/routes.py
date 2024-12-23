@@ -202,7 +202,7 @@ async def upload_product(
         raise HTTPException(status_code=500, detail=f"Failed to upload product: {str(e)}")
 
 
-@router.get("/MyProducts/")
+@router.get("/MyProducts")
 async def get_user_products(
     current_user: dict = Depends(get_current_user)
 ):
