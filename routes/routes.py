@@ -133,10 +133,8 @@ async def get_user_products(
     current_user: dict = Depends(get_current_user)
 ):
     try:
-        # Convert the current user's ID to PydanticObjectId
         user_id = PydanticObjectId(current_user.id)
         
-        # Retrieve all products for the current user
         products = await Product.find(Product.user_id == user_id).to_list()
         
         # Transform the products to include base64 images
