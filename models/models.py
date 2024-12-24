@@ -1,6 +1,6 @@
 from pydantic import field_validator, Field
 from beanie import Document
-from typing import Optional
+from typing import List, Optional
 from datetime import datetime
 
 class User(Document):
@@ -18,3 +18,12 @@ class Token(Document):
 
     class Settings:
         collection = "token_data"
+
+class Product(Document):
+    name: str
+    description: str
+    image_base64: List[str]
+    user_id: PydanticObjectId
+
+    class Settings:
+        collection = "products"

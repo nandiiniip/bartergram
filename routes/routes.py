@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Depends, status, Query, WebSocket, WebSocketDisconnect
+from fastapi import APIRouter, HTTPException, Depends, status, Query, File, UploadFile, Form, WebSocket, WebSocketDisconnect
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from datetime import timedelta, datetime, timezone
 from typing import List, Optional
@@ -176,3 +176,72 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends()):
 
     # Return the full Token model (including username, access_token, token_type, and expires_at)
     return new_token  # Return the whole token object
+
+@router.post("/upload/")
+async def upload_product(
+    name: str = Form(..., min_length=3, max_length=100),  # name as form field
+    description: str = Form(None, max_length=500),  # description as form field (optional)
+    images: List[UploadFile] = File(...),  # image as file upload
+    current_user: dict = Depends(get_current_user)  # Get the authenticated user (optional)
+):
+    try:
+        image_base64_list = [] 
+        for image in images: 
+            content = await image.read()
+            image_base64 = base64.b64encode(content).decode("utf-8")  
+            image_base64_list.append(image_base64)
+
+        # Create a Product instance with Base64 image data
+        user_id = PydanticObjectId(current_user.id)
+        product = Product(
+            name=name,
+            description=description,
+            image_base64=image_base64_list,  # Store the Base64 string
+            user_id= user_id,  # Associate with user
+        )
+
+        # Save to MongoDB
+        print(f"Product to be inserted: {product.user_id}")
+        await product.insert()
+        
+        return {
+            "msg": "Product uploaded successfully",
+            "product": {
+                "name": product.name,
+                "description": product.description,
+                "Image_count": len(product.image_base64),
+                "user_id": str(current_user.id),
+                "Product_ID": str(product.id)
+            }
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to upload product: {str(e)}")
+
+
+@router.get("/MyProducts")
+async def get_user_products(
+    current_user: dict = Depends(get_current_user)
+):
+    try:
+        user_id = PydanticObjectId(current_user.id)
+        
+        products = await Product.find(Product.user_id == user_id).to_list()
+        
+        # Transform the products to include base64 images
+        product_list = []
+        for product in products:
+            product_dict = {
+                "product_id": str(product.id),
+                "product_name": product.name,
+                "description": product.description or "",
+                "images": product.image_base64,  # List of base64 encoded images
+                "image_count": len(product.image_base64)
+            }
+            product_list.append(product_dict)
+        
+        return {
+            "total_products": len(product_list),
+            "products": product_list
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to retrieve products: {str(e)}")
