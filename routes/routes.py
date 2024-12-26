@@ -2,12 +2,14 @@ from fastapi import APIRouter, HTTPException, Depends, status, Query, File, Uplo
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from datetime import timedelta, datetime, timezone
 from typing import List, Optional
-from models import User, Token
+from models import User, Token, Product
 from utils import create_access_token, verify_password, get_password_hash, decode_access_token
 from beanie import PydanticObjectId
 import asyncio
 import aio_pika
 from pydantic import BaseModel
+import base64
+import json
 
 router = APIRouter()
 
@@ -71,7 +73,8 @@ class ConnectionManager:
     async def send_personal_message(self, message: str, user_id: str):
         websocket = self.active_connections.get(user_id)
         if websocket:
-            await websocket.send_text(message)
+            message_payload = {"content": message}
+            await websocket.send_text(json.dumps(message_payload))
 
 
 manager = ConnectionManager()
@@ -148,7 +151,6 @@ async def register(user: User):
     
     return {"msg": "User registered successfully"}
 
-@router.post("/login", response_model=Token)
 @router.post("/login", response_model=Token)
 async def login(form_data: OAuth2PasswordRequestForm = Depends()):
     user = await authenticate_user(form_data.username, form_data.password)
@@ -245,3 +247,55 @@ async def get_user_products(
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to retrieve products: {str(e)}")
+    
+@router.get("/products/", response_model=List[dict])
+async def get_all_products():
+    try:
+        products_with_users = []
+        async for product in Product.find_all():
+            user = await User.get(product.user_id)
+            if not user:
+                raise HTTPException(status_code=404, detail="User not found for a product.")
+            
+            product_with_username = {
+                "id":str(product.id),
+                "name": product.name,
+                "description": product.description,
+                "image_base64": product.image_base64,
+                "user_id": str(product.user_id),
+                "username": user.username,  # Include the username from the User model
+            }
+            products_with_users.append(product_with_username)
+        
+        return products_with_users
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"An error occurred: {str(e)}")
+    
+@router.get("/products/{product_id}", response_model=dict)
+async def get_product_by_id(product_id: str):
+    try:
+        # Fetch the product by its ID
+        product = await Product.get(product_id)
+        if not product:
+            raise HTTPException(status_code=404, detail="Product not found.")
+
+        # Fetch the associated user for the product
+        user = await User.get(product.user_id)
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found for the product.")
+
+        # Construct the product details with user information
+        product_with_user = {
+            "id": str(product.id),  # Include the product ID
+            "name": product.name,
+            "description": product.description,
+            "image_base64": product.image_base64,
+            "user_id": str(product.user_id),
+            "username": user.username,  # Include the username from the User model
+        }
+
+        return product_with_user
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"An error occurred: {str(e)}")
