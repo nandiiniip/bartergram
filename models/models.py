@@ -2,6 +2,7 @@ from pydantic import Field
 from beanie import Document, PydanticObjectId
 from typing import List, Optional
 from datetime import datetime
+import pytz
 
 class User(Document):
     username: str = Field(..., title="Username", min_length=3, max_length=50)
@@ -13,6 +14,7 @@ class User(Document):
 
 class Token(Document):
     username: str = Field(..., title="Username", min_length=3, max_length=50)
+    user_id: PydanticObjectId
     access_token: str = Field(..., title="Access Token")
     token_type: str = Field(..., title="Token Type")
     expires_at: datetime = Field(..., title="Token Expiration Time")
@@ -30,3 +32,9 @@ class Product(Document):
     class Settings:
         collection = "products"
 
+class Message(Document):
+    sender: str
+    receiver: str
+    content: str
+    timestamp: datetime = datetime.utcnow()
+    read: bool = False  # New field to track read status
