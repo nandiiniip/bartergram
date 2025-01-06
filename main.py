@@ -1,7 +1,6 @@
 from fastapi import FastAPI
 from configuration import init_db
 from contextlib import asynccontextmanager
-from starlette.middleware import Middleware
 from starlette.middleware.cors import CORSMiddleware
 
 @asynccontextmanager

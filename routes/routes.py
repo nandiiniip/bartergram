@@ -1,6 +1,6 @@
-from fastapi import APIRouter, HTTPException, Depends, status, Query, File, UploadFile, Form, WebSocket, WebSocketDisconnect
+from fastapi import APIRouter, HTTPException, Depends, status, File, UploadFile, Form, WebSocket, WebSocketDisconnect
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
-from datetime import timedelta, datetime, timezone
+from datetime import timedelta, datetime
 from typing import List, Optional
 from models import User, Token, Product, Message
 from utils import create_access_token, verify_password, get_password_hash, decode_access_token
@@ -282,7 +282,7 @@ async def get_all_products():
             product_with_username = {
                 "id":str(product.id),
                 "name": product.name,
-                "description": product.description,
+                "description": product.description or "",
                 "image_base64": product.image_base64,
                 "user_id": str(product.user_id),
                 "username": user.username,  # Include the username from the User model

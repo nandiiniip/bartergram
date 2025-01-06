@@ -2,7 +2,6 @@ from pydantic import Field
 from beanie import Document, PydanticObjectId
 from typing import List, Optional
 from datetime import datetime
-import pytz
 
 class User(Document):
     username: str = Field(..., title="Username", min_length=3, max_length=50)
